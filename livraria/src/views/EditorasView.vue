@@ -1,33 +1,50 @@
 <script>
-import { v4 as uuidv4 } from "uuid";
+import LivrosApi from "@/api/livros.js";
+import AutoresApi from "@/api/autores.js";
+import CategoriasApi from "@/api/categorias.js";
+import EditorasApi from "@/api/editoras.js";
+const livrosApi = new LivrosApi();
+const autoresApi = new AutoresApi();
+const categoriasApi = new CategoriasApi();
+const editorasApi = new EditorasApi();
 export default {
   data() {
     return {
-      editoras: [
-        { id: "8ae6623d-5462-4774-b5e1-e263c5d2d367", nome: "Seguinte" },
-        { id: "1f659d91-17b5-40da-b5fb-dbffa5664e27", nome: "Record" },
-        { id: "d5a59ada-da1d-47a2-9a6e-e99964df9571", nome: "Companhia da Letras" },
-        { id: "2311c938-42fa-4661-a3fc-9ba664a30f6e", nome: "Rocco" },
-        { id: "6f58a76b-0ea0-4bca-8d93-296c7d69685c", nome: "Darkside Books" },
-      ],
-      nova_editora: "",
+      livro: {},
+      livros: [],
+      categoria: {},
+      categorias: [],
+      editora: {},
+      editoras: [],
+      autor: {},
+      autores: [],
     };
   },
-
+  async created() {
+    this.livros = await livrosApi.buscarTodosOsLivros();
+    this.autores = await autoresApi.buscarTodosOsAutores();
+    this.categorias = await categoriasApi.buscarTodasAsCategorias();
+    this.editoras = await editorasApi.buscarTodasAsEditoras();
+  },
   methods: {
-    salvar() {
-      if (this.nova_editora !== "") {
-        const novo_id = uuidv4();
-        this.editoras.push({
-          id: novo_id,
-          nome: this.nova_editora,
-        });
-        this.nova_editora = "";
+    async salvar() {
+      if (this.livro.id) {
+        await livrosApi.atualizarLivro(this.livro);
+      } else {
+        await livrosApi.adicionarLivro(this.livro);
       }
+      this.livros = await livrosApi.buscarTodosOsLivros();
+      this.categorias = await categoriasApi.buscarTodasAsCategorias();
+      this.editoras = await editorasApi.buscarTodasAsEditoras();
+      this.autores = await autoresApi.buscarTodosOsAutores();
+      this.livro = {};
     },
-    excluir(editoras) {
-      const indice = this.editoras.indexOf(editoras);
-      this.editoras.splice(indice, 1);
+    async excluir(livro) {
+      await livrosApi.excluirLivro(livro.id);
+      this.livros = await livrosApi.buscarTodosOsLivros();
+    },
+    editar(livro) {
+      Object.assign(this.livro, livro);
     },
   },
 };
@@ -40,7 +57,7 @@ export default {
     </div>
     <div class="form-input">
       <input type="text" placeholder="Editora" v-model="nova_editora" />
-      <button @click="salvar">Salvar</button>
+      <button @click="salvar()">Salvar</button>
     </div>
     <div class="list-editoras">
       <table>
@@ -58,7 +75,8 @@ export default {
             <td>{{ editoras.nome }}</td>
             <td>www.</td>
             <td>
-              <button class="excluir" @click="excluir(editoras)">Excluir</button>
+              <button class="excluir" @click="excluir()">Excluir</button>
+              <button class="editar" @click="editar()">Editar</button>
             </td>
           </tr>
         </tbody>

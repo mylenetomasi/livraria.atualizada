@@ -1,36 +1,32 @@
 <script>
-import { v4 as uuidv4 } from "uuid";
+import CategoriasApi from "@/api/categorias.js";
+const categoriasApi = new CategoriasApi();
 export default {
   data() {
     return {
-      categorias: [
-        { id: "8ae6623d-5462-4774-b5e1-e263c5d2d367", nome: "romance", classificacao: "qualquer idade"},
-        { id: "1f659d91-17b5-40da-b5fb-dbffa5664e27", nome: "ficção" , classificacao: "12 a 30"},
-        { id: "d5a59ada-da1d-47a2-9a6e-e99964df9571", nome: "terror" ,  classificacao: "15 a 70" },
-        { id: "2311c938-42fa-4661-a3fc-9ba664a30f6e", nome: "suspense" , classificacao: "11 a 50"},
-        { id: "6f58a76b-0ea0-4bca-8d93-296c7d69685c", nome: "distopia" ,  classificacao: "14 a 60" },
-      ],
-      nova_categoria: "",
-      nova_classificacao: "",
+      categoria: {},
+      categorias: [],
     };
   },
-
+  async created() {
+    this.categorias = await categoriasApi.buscarTodasAsCategorias();
+  },
   methods: {
-    salvar() {
-      if (this.nova_categoria !== "") {
-        const novo_id = uuidv4();
-        this.categorias.push({
-          id: novo_id,
-          nome: this.nova_categoria,
-          classificacao: this.nova_classificacao
-        });
-        this.nova_categoria = ""; 
-        this.nova_classificacao = ""; 
+    async salvar() {
+      if (this.categoria.id) {
+        await categoriasApi.atualizarCategoria(this.categoria);
+      } else {
+        await categoriasApi.adicionarCategoria(this.categoria);
       }
+      this.categorias = await categoriasApi.buscarTodasAsCategorias();
+      this.categoria = {};
     },
-    excluir(categorias) {
-      const indice = this.categorias.indexOf(categorias);
-      this.categorias.splice(indice, 1);
+    async excluir(categoria) {
+      await categoriasApi.excluirCategoria(categoria.id);
+      this.categorias = await categoriasApi.buscarTodasAsCategorias();
+    },
+    editar(categoria) {
+      Object.assign(this.categoria, categoria);
     },
   },
 };
@@ -44,7 +40,7 @@ export default {
     <div class="form-input">
       <input type="text" placeholder="categoria" v-model="nova_categoria" />
       <input type="text" placeholder="classificação" v-model="nova_classificacao" />
-      <button @click="salvar">Salvar</button>
+      <button @click="salvar()">Salvar</button>
     </div>
     <div class="list-categorias">
       <table>
@@ -62,7 +58,8 @@ export default {
             <td>{{ categoria.nome }}</td>
             <td>{{ categoria.classificacao }}</td>
             <td>
-              <button class="excluir" @click="excluir(categoria)">Excluir</button>
+              <button class="excluir" @click="excluir()">Excluir</button>
+              <button class="editar" @click="editar()">Editar</button>
             </td>
           </tr>
         </tbody>

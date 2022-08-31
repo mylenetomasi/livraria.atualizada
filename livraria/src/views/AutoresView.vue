@@ -1,33 +1,32 @@
 <script>
-import { v4 as uuidv4 } from "uuid";
+import AutoresApi from "@/api/autores.js";
+const autoresApi = new AutoresApi();
 export default {
   data() {
     return {
-      autores: [
-        { id: "8ae6623d-5462-4774-b5e1-e263c5d2d367", nome: "Agatha Christie " },
-        { id: "1f659d91-17b5-40da-b5fb-dbffa5664e27", nome: "William Shakespeare" },
-        { id: "d5a59ada-da1d-47a2-9a6e-e99964df9571", nome: "Jane Austen" },
-        { id: "2311c938-42fa-4661-a3fc-9ba664a30f6e", nome: "Machado de Assis" },
-        { id: "6f58a76b-0ea0-4bca-8d93-296c7d69685c", nome: "Caio Fernando Abreu" },
-      ],
-      novo_autor: "",
+      autor: {},
+      autores: [],
     };
   },
-
+  async created() {
+    this.autores = await autoresApi.buscarTodosOsAutores();
+  },
   methods: {
-    salvar() {
-      if (this.novo_autor !== "") {
-        const novo_id = uuidv4();
-        this.autores.push({
-          id: novo_id,
-          nome: this.novo_autor,
-        });
-        this.novo_autor = "";
+    async salvar() {
+      if (this.autor.id) {
+        await autoresApi.atualizarAutor(this.autor);
+      } else {
+        await autoresApi.adicionarAutor(this.autor);
       }
+      this.autores = await autoresApi.buscarTodosOsAutores();
+      this.autor = {};
     },
-    excluir(autores) {
-      const indice = this.autores.indexOf(autores);
-      this.autores.splice(indice, 1);
+    async excluir(autor) {
+      await autoresApi.excluirAutor(autor.id);
+      this.autores = await autoresApi.buscarTodosOsAutores();
+    },
+    editar(autor) {
+      Object.assign(this.autor, autor);
     },
   },
 };
@@ -40,7 +39,7 @@ export default {
     </div>
     <div class="form-input">
       <input type="text" placeholder="Autor" v-model="novo_autor" />
-      <button @click="salvar">Salvar</button>
+      <button @click="salvar()">Salvar</button>
     </div>
     <div class="list-autores">
       <table>
@@ -56,7 +55,8 @@ export default {
             <td>{{ autores.id }}</td>
             <td>{{ autores.nome }}</td>
             <td>
-              <button class="excluir" @click="excluir(autores)">Excluir</button>
+              <button class="excluir" @click="excluir()">Excluir</button>
+              <button class="editar" @click="editar()">Editar</button>
             </td>
           </tr>
         </tbody>
